@@ -1,1 +1,1 @@
-{"title":"Any Counter (PWA)","name":"Any Counter (PWA)","short_name":"Any Counter (PWA)","start_url":"/any-counter","icons":[{"src":"images/favicon.ico?v=e091278fa97b26719f9b26bd5e018048","sizes":"64x64 32x32 24x24 16x16","type":"image/x-icon"}]}
+{"title":"Any Counter (PWA)","name":"Any Counter (PWA)","short_name":"Any Counter (PWA)","start_url":"index.html","icons":[{"src":"images/favicon.ico?v=e091278fa97b26719f9b26bd5e018048","sizes":"64x64 32x32 24x24 16x16","type":"image/x-icon"}]}
