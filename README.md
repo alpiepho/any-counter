@@ -44,5 +44,6 @@ This is a list of some things to finish up:
 - Use this for other apps:
     - A clock timer
     - A date count down
+- Can we adopt WebAssembly to run and compare C/WebAssembly version of counter to Javascript?
 
 
