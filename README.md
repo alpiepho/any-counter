@@ -1,4 +1,11 @@
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/e45fa791-f2d6-4edd-b9a3-fd09e192f86d/deploy-status)](https://app.netlify.com/sites/elated-hypatia-4f4711/deploys)
+
+Deployed on [Netlify](https://elated-hypatia-4f4711.netlify.com)
+
+Deployed on [GH-Pages](https://alpiepho.github.io/any-counter/)
+
+
 ## Any Counter PWA
 
 ![any-counter](./any_counter.png)
