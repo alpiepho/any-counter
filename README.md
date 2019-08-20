@@ -19,6 +19,14 @@ A more complex example is min set to '5 0 0' and max set to '9 59 59' then you h
 
 This algorithm was originally used to 'count' thru the permutations of letter from a phone. '2' shows 'abc', '7' shows 'pqrs'. The ranges are different. This algorithm was used to map from integers to letters. With min set to '0 0', and max to '2 3', the count would be '0 0', '0 1'...'2 3'. This can easily be mapped to 'ap', 'aq'...'cs'.
 
+### Addition of Run and WebAssembly
+
+The 'run' feature lets you free run the counter. The 'run rate'
+should let you guage the difference in
+performance of the Javascript implentation vs the WebAssembly
+version.  WebAssembly uses a cycle count since there is no timer 
+in WebAssembly (that I know of).
+
 
 ## Success!!!
 

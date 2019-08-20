@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react"
-import { Button, Checkbox, Grid, FormControlLabel, Paper, TextField, Typography } from "@material-ui/core"
+import {
+  Button,
+  Checkbox,
+  Grid,
+  FormControlLabel,
+  Paper,
+  TextField,
+  Typography,
+} from "@material-ui/core"
 import { FaGithub } from "react-icons/fa"
 import { makeStyles } from "@material-ui/core/styles"
 import {
@@ -53,15 +61,14 @@ const useStyles = makeStyles(theme => ({
 }))
 
 var timerHandle = null
-var timerCount = 0
 
 export default function AnyCounter() {
-  const [minDigits, setMinDigits]     = useState("0 0 0 0")
-  const [maxDigits, setMaxDigits]     = useState("9 9 9 9")
-  const [allDigits, setAllDigits]     = useState("0 0 0 0")
-  const [running, setRunning]         = useState(0)
-  const [runRate, setRunRate]         = useState(1000)
-  const [displayRate, setDisplayRate] = useState(1000)
+  const [minDigits, setMinDigits] = useState("0 0 0 0")
+  const [maxDigits, setMaxDigits] = useState("9 9 9 9")
+  const [allDigits, setAllDigits] = useState("0 0 0 0")
+  const [running, setRunning] = useState(0)
+  const [runRate, setRunRate] = useState(1000)
+  const [cycles, setCycles] = useState(1000)
   const [webAssembly, setWebAssembly] = useState(false)
 
   const classes = useStyles()
@@ -82,13 +89,9 @@ export default function AnyCounter() {
 
   const startTimer = () => {
     timerHandle = setInterval(() => {
-      timerCount++
       engine_next()
-      //if ((timerCount * runRate) >= displayRate) {
-        setAllDigits(engine_get())
-        timerCount = 0
-      //}
-      }, runRate)
+      setAllDigits(engine_get())
+    }, runRate)
   }
 
   const onMinChange = event => {
@@ -114,32 +117,30 @@ export default function AnyCounter() {
   }
 
   const onRunClick = () => {
-    if (running) 
-      stopTimer();
+    if (running) stopTimer()
     else {
-      if (runRate && displayRate)
-        timerCount = 0
-        startTimer();
+      startTimer()
     }
     setRunning(!running)
   }
 
   const onRunRateChange = event => {
     try {
-      let value = parseInt(event.target.value)
-      setRunRate(value)  
-    }
-    catch (e) {}
+      if (event.target.value.length) {
+        let value = parseInt(event.target.value)
+        setRunRate(value)
+      }
+   } catch (e) {}
   }
 
-  const onDisplayRateChange = event => {
+  const onCyclesChange = event => {
     try {
-      let value = parseInt(event.target.value)
-      setDisplayRate(value)  
-    }
-    catch (e) {}
+      if (event.target.value.length) {
+        let value = parseInt(event.target.value)
+        setCycles(value)
+      }
+    } catch (e) {}
   }
-
 
   const onWebAssemblyClick = () => {
     setWebAssembly(!webAssembly)
@@ -172,7 +173,7 @@ export default function AnyCounter() {
               color="primary"
               onClick={onRunClick}
             >
-              {running ? 'Stop' : 'Run'}
+              {running ? "Stop" : "Run"}
             </Button>
           </Paper>
         </Grid>
@@ -201,31 +202,34 @@ export default function AnyCounter() {
                 onChange={onMinChange}
               />
             </Grid>
-            <Grid item>
-              <TextField
-                id="standard-helperText"
-                label="run time"
-                defaultValue={runRate}
-                className={classes.textField}
-                helperText="ms, time delta next calls, 0=fastest"
-                margin="normal"
-                onChange={onRunRateChange}
-              />
-            </Grid>
-            <Grid item>
-              <TextField
-                id="standard-helperText"
-                label="display time"
-                defaultValue={displayRate}
-                className={classes.textField}
-                helperText="ms, time delta display update, 0=fastest"
-                margin="normal"
-                onChange={onDisplayRateChange}
-              />
-            </Grid>
+            {!webAssembly ? (
+              <Grid item>
+                <TextField
+                  id="standard-helperText"
+                  label="run time"
+                  defaultValue={runRate}
+                  className={classes.textField}
+                  helperText="ms, time delta next calls, 0=fastest"
+                  margin="normal"
+                  onChange={onRunRateChange}
+                />
+              </Grid>
+            ) : null}
+            {webAssembly ? (
+              <Grid item>
+                <TextField
+                  id="standard-helperText"
+                  label="cycle count"
+                  defaultValue={cycles}
+                  className={classes.textField}
+                  helperText="WebAssembly Cycles per access"
+                  margin="normal"
+                  onChange={onCyclesChange}
+                />
+              </Grid>
+            ) : null}
             <Grid item>
               <FormControlLabel
-                disabled
                 className={classes.checkboxField}
                 control={
                   <Checkbox
@@ -284,9 +288,10 @@ export default function AnyCounter() {
               gutterBottom
             >
               The 'run' feature lets you free run the counter. The 'run rate'
-              and 'display rate' should let you guage the difference in
+              should let you guage the difference in
               performance of the Javascript implentation vs the WebAssembly
-              version.
+              version.  WebAssembly uses a cycle count since there is no timer 
+              in WebAssembly (that I know of).
             </Typography>
             <Typography
               className={classes.paragraph}
