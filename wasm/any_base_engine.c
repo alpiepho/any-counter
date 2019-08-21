@@ -39,22 +39,10 @@
 // others have 4 letters possible.  With some simple mapping of numbers to letters, we can use this
 // counter to get the permutations.  Besides, its kind of fun.
 
+
 //////////////////////////////////////////////////////
 // Support Functions
 //////////////////////////////////////////////////////
-
-
-void show(char *label, int *returnArray, int returnSize) {
-    int i;
-
-    printf("%s[ ", label);
-    for (i=0; i<returnSize; i++) {
-        printf("%d", returnArray[i]);
-        if (i < (returnSize-1))
-            printf(", ");
-    }
-    printf(" ]\n");
-}
 
 void dump(int **returnArrays, int returnSize, int* returnColumnSizes, int show_as_hex){
     int i, j, n;
@@ -70,7 +58,7 @@ void dump(int **returnArrays, int returnSize, int* returnColumnSizes, int show_a
     printf("returnArrays: [\n");
     for (j=0; j<returnSize; j++) {
         n = returnColumnSizes[j];
-        printf("  %d: [ ", j);
+        printf("  %2d: [ ", j);
         for (i=0; i<n; i++) {
             if (show_as_hex)
                 printf("%x", returnArrays[j][i]);
@@ -103,9 +91,15 @@ void cleanup(int **returnArrays, int returnSize, int* returnColumnSizes){
 }
 
 //////////////////////////////////////////////////////
-// Question Functions
+// Engine Functions
 //////////////////////////////////////////////////////
 
+
+// These functions are intended for use as WebAssembly.  I don't
+// think there is memory allocation in that environment so we will
+// use a fixed number of digits.  Also, the WASM <-> JS interface
+// gets tricky defining the JS signature, so i am starting simple
+// by generating seperate parameters.
 #define ENGINE_SIZE 10
 int engine_mins[ENGINE_SIZE];
 int engine_maxs[ENGINE_SIZE];
@@ -113,11 +107,17 @@ int engine_nums[ENGINE_SIZE];
 int engine_minhex = 0;
 int engine_maxhex = 0;
 
-// These functions are intended for use as WebAssembly.  I don't
-// think there is memory allocation in that environment so we will
-// use a fixed number of digits.  Also, the WASM <-> JS interface
-// gets tricky defining the JS signature, so i am starting simple
-// by generating seperate parameters.
+void engine_show(char *label, int *returnArray, int returnSize) {
+    int i;
+
+    printf("%s[ ", label);
+    for (i=0; i<returnSize; i++) {
+        printf("%d", returnArray[i]);
+        if (i < (returnSize-1))
+            printf(", ");
+    }
+    printf(" ]\n");
+}
 
 void engine_min(
     int digit09,
@@ -146,6 +146,7 @@ void engine_min(
     for (i=0; i<ENGINE_SIZE && !engine_minhex; i++) {
         if (engine_mins[i] > 9) engine_minhex = 1;
     }
+    //engine_show("engine_mins", engine_mins, ENGINE_SIZE);
 }
 
 void engine_max(
@@ -173,7 +174,7 @@ void engine_max(
     engine_maxs[i--] = digit00;
     engine_maxhex = 0;
     for (i=0; i<ENGINE_SIZE && !engine_maxhex; i++) {
-        if (engine_mins[i] > 9) engine_maxhex = 1;
+        if (engine_maxs[i] > 9) engine_maxhex = 1;
     }
 }
 
@@ -210,19 +211,11 @@ void engine_reset(void) {
     }
 }
 
-void counter_increment(int *mins, int* maxs, int numsSize, int* accum){
-    int place = numsSize-1;
 
-    accum[place] += 1;
-    // work backwards, add 1 to buffer[col][n] and carry if needed to n-1
-    while (accum[place] > maxs[place]) {
-        accum[place] = mins[place]; // reset place
-        if (place == 0)
-            break;         // have we maxed out
-        if (place > 0) accum[place-1] += 1; // carry to next place
-        place -= 1;
-    }
-}
+
+//////////////////////////////////////////////////////
+// Question Functions
+//////////////////////////////////////////////////////
 
 int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnColumnSizes){
     int i, j, n, col = 0;
@@ -247,92 +240,76 @@ int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnC
         buffer[j] = (int *)malloc(sizeof(int) * n);
     }
 
-    accum = (int *)malloc(sizeof(int) * numsSize);
-    for (i=0; i<numsSize; i++) {
-        accum[i] = mins[i];
+    // engine setup
+
+    // engine_mins and engine_maxs need N parameters rather
+    // than array (until I can figure out wasm interface)
+    int temp[ENGINE_SIZE];
+
+    // clear temp
+    for (i=0; i<ENGINE_SIZE; i++) {
+        temp[i] = 0;
     }
+    // fill as many least significant digits as possible
+    i = ENGINE_SIZE;
+    j = numsSize;
+    while (i && j) {
+        temp[--i] = mins[--j];
+    }
+    // set mins
+    engine_min(
+        temp[9],
+        temp[8],
+        temp[7],
+        temp[6],
+        temp[5],
+        temp[4],
+        temp[3],
+        temp[2],
+        temp[1],
+        temp[0]
+    );
+
+    // clear temp
+    for (i=0; i<ENGINE_SIZE; i++) {
+        temp[i] = 0;
+    }
+    // fill as many least significant digits as possible
+    i = ENGINE_SIZE;
+    j = numsSize;
+    while (i && j) {
+        temp[--i] = maxs[--j];
+    }
+    // set maxs
+    engine_max(
+        temp[9],
+        temp[8],
+        temp[7],
+        temp[6],
+        temp[5],
+        temp[4],
+        temp[3],
+        temp[2],
+        temp[1],
+        temp[0]
+    );
+
+    engine_reset();
 
     // run counter
     // copy accum
     n = array[0];
-    for (i=0; i<n; i++) {
-        buffer[0][i] = accum[i];
+    for (i = ENGINE_SIZE-1, j = n-1; j>=0; i--, j--) {
+        buffer[0][j] = engine_nums[i];
     }
     for (col=1; col<total; col++) {
-        counter_increment(mins, maxs, numsSize, accum); 
+        engine_next(); 
         // copy accum
         n = array[col];
-        for (i=0; i<n; i++) {
-            buffer[col][i] = accum[i];
+        for (i = ENGINE_SIZE-1, j = n-1; j>=0; i--, j--) {
+            buffer[col][j] = engine_nums[i];
         }
     }
-
-    free(accum);
-    return buffer;
-}
-
-
-
-
-int** counter_engine(int *mins, int* maxs, int numsSize, int* returnSize, int** returnColumnSizes){
-    int i, j, n, col = 0;
-    int total = 1;
-    int *array;
-    int **buffer;
-    int *accum;
-
-    for (i = 0; i < numsSize; i++) {
-        total *= ( (maxs[i]-mins[i]) +1);     
-    } 
-    *returnSize = total;
-
-    // all columns are same size, n
-    array = (int *)malloc(sizeof(int) * total);
-    for (i=0; i < total; i++) array[i] = numsSize;
-    *returnColumnSizes = array;
-
-    buffer = (int **)malloc(sizeof(int *) * total);
-    for (j=0; j < total; j++) {
-        n = array[j];
-        buffer[j] = (int *)malloc(sizeof(int) * n);
-    }
-
-// TODO: need to finish using engine_* functions
-// passing 10 parameters is getting to be an issue
-    // int new_nims[ENGINE_SIZE];
-
-    // engine_mins(
-    //     new_nims[9],
-    //     new_nims[8],
-    //     new_nims[7],
-    //     new_nims[6],
-    //     new_nims[5],
-    //     new_nims[4],
-    //     new_nims[3],
-    //     new_nims[2],
-    //     new_nims[1],
-    //     new_nims[0]
-    // );
-
-    // accum = engine_nums;
-    // for (i=0; i<numsSize; i++) {
-    //     accum[i] = mins[i];
-    // }
-
-    // // run counter
-    // // copy accum
-    // n = array[0];
-    // for (i=0; i<n; i++) {
-    //     buffer[0][i] = accum[i];
-    // }
-    // for (col=1; col<total; col++) {
-    //     counter_increment(mins, maxs, numsSize, accum); 
-    //     // copy accum
-    //     n = array[col];
-    //     for (i=0; i<n; i++) {
-    //         buffer[col][i] = accum[i];
-    //     }
-    // }
 
     return buffer;
 }
@@ -353,7 +330,8 @@ int main(void) {
         int mins[] = { 0,0 };
         int maxs[] = { 1,1 };
         int numsSize = sizeof(maxs)/sizeof(int);
-        show("given: ", maxs, numsSize);
+        engine_show("given mins: ", mins, numsSize);
+        engine_show("given maxs: ", maxs, numsSize);
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -363,7 +341,8 @@ int main(void) {
         int mins[] = { 0 };
         int maxs[] = { 9 };
         int numsSize = sizeof(maxs)/sizeof(int);
-        show("given: ", maxs, numsSize);
+        engine_show("given mins: ", mins, numsSize);
+        engine_show("given maxs: ", maxs, numsSize);
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -373,7 +352,8 @@ int main(void) {
         int mins[] = { 0 };
         int maxs[] = { 15 };
         int numsSize = sizeof(maxs)/sizeof(int);
-        show("given: ", maxs, numsSize);
+        engine_show("given mins: ", mins, numsSize);
+        engine_show("given maxs: ", maxs, numsSize);
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -383,7 +363,8 @@ int main(void) {
         int mins[] = { 0,0,0 };
         int maxs[] = { 3,2,1 };
         int numsSize = sizeof(maxs)/sizeof(int);
-        show("given: ", maxs, numsSize);
+        engine_show("given mins: ", mins, numsSize);
+        engine_show("given maxs: ", maxs, numsSize);
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -393,7 +374,8 @@ int main(void) {
         int mins[] = { 0,0 };
         int maxs[] = { 2,2 };
         int numsSize = sizeof(maxs)/sizeof(int);
-        show("given: ", maxs, numsSize);
+        engine_show("given mins: ", mins, numsSize);
+        engine_show("given maxs: ", maxs, numsSize);
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -403,8 +385,9 @@ int main(void) {
         int mins[] = { 1,1 };
         int maxs[] = { 2,2 };
         int numsSize = sizeof(maxs)/sizeof(int);
-        show("given: ", maxs, numsSize);
-        returnArrays = counter_engine(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
+        engine_show("given mins: ", mins, numsSize);
+        engine_show("given maxs: ", maxs, numsSize);
+        returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
     }
