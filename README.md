@@ -38,12 +38,14 @@ I have been exeprimenting with LightHouse testing for a few weeks.  I noticed th
 
 This is a list of some things to finish up:
 
-- Clean up layout.js (remove or use Header etc)
-- Clean up unused components
 - Create Bootstrap version
 - Use this for other apps:
     - A clock timer
     - A date count down
 - Can we adopt WebAssembly to run and compare C/WebAssembly version of counter to Javascript?
+- see branch for wasm investigation
+- hope for wasm with C and Rush versions
+- Might go the other way and use AWS or Azure services for counter
+
 
 
