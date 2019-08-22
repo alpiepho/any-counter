@@ -5,6 +5,8 @@ Deployed on [Netlify](https://elated-hypatia-4f4711.netlify.com)
 
 Deployed on [GH-Pages](https://alpiepho.github.io/any-counter/)
 
+Keywords: Javascript, React, Gatsby, PWA, WebAssembly, GH-Pages, Netlify
+
 
 ## Any Counter PWA
 

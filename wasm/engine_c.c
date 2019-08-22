@@ -1,52 +1,6 @@
 #include <stdio.h>
 #include <emscripten/emscripten.h>
 
-// TEST with
-// Module.ccall('hello', 'number', null, null)
-// or
-// const hello = Module.cwrap('hello', 'number', null, null)
-// hello()
-//
-// signature:
-// Module.ccall('hello', 'number', ['string', 'string'], ['hello', 'world'])
-int EMSCRIPTEN_KEEPALIVE hello(int argc, char ** argv) {
-  printf("Hello!\n");
-  return 8;
-}
-
-int EMSCRIPTEN_KEEPALIVE hello2(int argc, char ** argv) {
-  printf("Hello!\n");
-  printf("argc: %d\n", argc);
-  return 8;
-}
-
-// MY TEST
-//Module.ccall('hello', 'number', null, null)
-// int EMSCRIPTEN_KEEPALIVE mytest(int argc, char ** argv) {
-//   int i;
-//   printf("argc: %d\n", argc);
-//   printf("argv:\n");
-//   for (i=0; i<argc; i++) {
-//     printf("  %s\n", argv[i]);
-//   }
-//   return 7;
-// }
-// Module.ccall('mytest', 'number', ['number', 'number'], [1, 3])
-// var mytest = Module.ccall('mytest', 'number', ['number', 'number'], [1, 3])
-int EMSCRIPTEN_KEEPALIVE mytest(int cycles, int digit09) {
-  printf("mytest!\n");
-  printf("cycles  %d\n", cycles);
-  printf("digit09 %d\n", digit09);
-  return 0;
-}
-
-
-
-
-
-
-
-
 // These functions are intended for use as WebAssembly.  I don't
 // think there is memory allocation in that environment so we will
 // use a fixed number of digits.  Also, the WASM <-> JS interface
@@ -106,7 +60,6 @@ void EMSCRIPTEN_KEEPALIVE engine_min(
     for (i=0; i<ENGINE_SIZE && !engine_minhex; i++) {
         if (engine_mins[i] > 9) engine_minhex = 1;
     }
-    //engine_show("engine_mins", engine_mins, ENGINE_SIZE);
 }
 
 void EMSCRIPTEN_KEEPALIVE engine_max(
@@ -136,7 +89,6 @@ void EMSCRIPTEN_KEEPALIVE engine_max(
     for (i=0; i<ENGINE_SIZE && !engine_maxhex; i++) {
         if (engine_maxs[i] > 9) engine_maxhex = 1;
     }
-    //engine_show("engine_maxs", engine_maxs, ENGINE_SIZE);
 }
 
 void EMSCRIPTEN_KEEPALIVE engine_reset(void) {
@@ -144,7 +96,6 @@ void EMSCRIPTEN_KEEPALIVE engine_reset(void) {
     for (i=0; i<ENGINE_SIZE; i++) {
         engine_nums[i] = engine_mins[i];
     }
-    //engine_show("engine_nums", engine_nums, ENGINE_SIZE);
 }
 
 void EMSCRIPTEN_KEEPALIVE engine_get(void) {
@@ -178,16 +129,10 @@ void EMSCRIPTEN_KEEPALIVE engine_run(int cycles) {
 
     for(i=0; i<cycles; i++) {
         engine_next();
-        //engine_show("engine_nums", engine_nums, ENGINE_SIZE);
     }
 }
 
 
-
-
-
-
-
 int main(int argc, char ** argv) {
-  printf("Hello World\n");
+  return 0;
 }

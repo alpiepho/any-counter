@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define EMSCRIPTEN_KEEPALIVE
 
 // gcc any_base_engine.c -o runme ; ./runme
 
@@ -119,7 +120,15 @@ void engine_show(char *label, int *returnArray, int returnSize) {
     printf(" ]\n");
 }
 
-void engine_min(
+void EMSCRIPTEN_KEEPALIVE engine_dump(void) {
+    engine_show("engine_mins", engine_mins, ENGINE_SIZE);
+    engine_show("engine_maxs", engine_maxs, ENGINE_SIZE);
+    engine_show("engine_nums", engine_nums, ENGINE_SIZE);
+    printf("engine_minhex: %d\n", engine_minhex);
+    printf("engine_maxhex: %d\n", engine_maxhex);
+}
+
+void EMSCRIPTEN_KEEPALIVE engine_min(
     int digit09,
     int digit08,
     int digit07,
@@ -131,25 +140,24 @@ void engine_min(
     int digit01,
     int digit00
 ) {
-    int i = 9;
-    engine_mins[i--] = digit09;
-    engine_mins[i--] = digit08;
-    engine_mins[i--] = digit07;
-    engine_mins[i--] = digit06;
-    engine_mins[i--] = digit05;
-    engine_mins[i--] = digit04;
-    engine_mins[i--] = digit03;
-    engine_mins[i--] = digit02;
-    engine_mins[i--] = digit01;
-    engine_mins[i--] = digit00;
+    int i = 0;
+    engine_mins[i++] = digit09;
+    engine_mins[i++] = digit08;
+    engine_mins[i++] = digit07;
+    engine_mins[i++] = digit06;
+    engine_mins[i++] = digit05;
+    engine_mins[i++] = digit04;
+    engine_mins[i++] = digit03;
+    engine_mins[i++] = digit02;
+    engine_mins[i++] = digit01;
+    engine_mins[i++] = digit00;
     engine_minhex = 0;
     for (i=0; i<ENGINE_SIZE && !engine_minhex; i++) {
         if (engine_mins[i] > 9) engine_minhex = 1;
     }
-    //engine_show("engine_mins", engine_mins, ENGINE_SIZE);
 }
 
-void engine_max(
+void EMSCRIPTEN_KEEPALIVE engine_max(
     int digit09,
     int digit08,
     int digit07,
@@ -161,24 +169,31 @@ void engine_max(
     int digit01,
     int digit00
 ) {
-    int i = 9;
-    engine_maxs[i--] = digit09;
-    engine_maxs[i--] = digit08;
-    engine_maxs[i--] = digit07;
-    engine_maxs[i--] = digit06;
-    engine_maxs[i--] = digit05;
-    engine_maxs[i--] = digit04;
-    engine_maxs[i--] = digit03;
-    engine_maxs[i--] = digit02;
-    engine_maxs[i--] = digit01;
-    engine_maxs[i--] = digit00;
+    int i = 0;
+    engine_maxs[i++] = digit09;
+    engine_maxs[i++] = digit08;
+    engine_maxs[i++] = digit07;
+    engine_maxs[i++] = digit06;
+    engine_maxs[i++] = digit05;
+    engine_maxs[i++] = digit04;
+    engine_maxs[i++] = digit03;
+    engine_maxs[i++] = digit02;
+    engine_maxs[i++] = digit01;
+    engine_maxs[i++] = digit00;
     engine_maxhex = 0;
     for (i=0; i<ENGINE_SIZE && !engine_maxhex; i++) {
         if (engine_maxs[i] > 9) engine_maxhex = 1;
     }
 }
 
-void engine_get(void) {
+void EMSCRIPTEN_KEEPALIVE engine_reset(void) {
+    int i;
+    for (i=0; i<ENGINE_SIZE; i++) {
+        engine_nums[i] = engine_mins[i];
+    }
+}
+
+void EMSCRIPTEN_KEEPALIVE engine_get(void) {
     // print string, let js decode? convert to hex
     int i;
     for (i=0; i<ENGINE_SIZE; i++) {
@@ -190,7 +205,7 @@ void engine_get(void) {
     printf("\n");
 }
 
-void engine_next(void) {
+void EMSCRIPTEN_KEEPALIVE engine_next(void) {
     int place = ENGINE_SIZE-1;
 
     engine_nums[place] += 1;
@@ -204,10 +219,11 @@ void engine_next(void) {
     }
 }
 
-void engine_reset(void) {
+void EMSCRIPTEN_KEEPALIVE engine_run(int cycles) {
     int i;
-    for (i=0; i<ENGINE_SIZE; i++) {
-        engine_nums[i] = engine_mins[i];
+
+    for(i=0; i<cycles; i++) {
+        engine_next();
     }
 }
 
@@ -258,17 +274,19 @@ int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnC
     }
     // set mins
     engine_min(
-        temp[9],
-        temp[8],
-        temp[7],
-        temp[6],
-        temp[5],
-        temp[4],
-        temp[3],
-        temp[2],
+        temp[0],
         temp[1],
-        temp[0]
+        temp[2],
+        temp[3],
+        temp[4],
+        temp[5],
+        temp[6],
+        temp[7],
+        temp[8],
+        temp[9]
     );
+    engine_show("mins", mins, numsSize);
+    engine_show("engine_mins2", engine_mins, ENGINE_SIZE);
 
     // clear temp
     for (i=0; i<ENGINE_SIZE; i++) {
@@ -282,16 +300,16 @@ int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnC
     }
     // set maxs
     engine_max(
-        temp[9],
-        temp[8],
-        temp[7],
-        temp[6],
-        temp[5],
-        temp[4],
-        temp[3],
-        temp[2],
+        temp[0],
         temp[1],
-        temp[0]
+        temp[2],
+        temp[3],
+        temp[4],
+        temp[5],
+        temp[6],
+        temp[7],
+        temp[8],
+        temp[9]
     );
 
     engine_reset();
