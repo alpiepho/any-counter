@@ -131,50 +131,75 @@ To open the developer console window on Chrome, use the keyboard shortcut CmdShi
 ```
 // code snipets for emscripten console window
 // Set mins
-Module.ccall('engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])
+Module.ccall('wa_engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])
 // Set maxs
-Module.ccall('engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])
+Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])
 // Reset
-Module.ccall('engine_reset', null, null, null)
+Module.ccall('wa_engine_reset', null, null, null)
 // Next
-Module.ccall('engine_next', null, null, null)
+Module.ccall('wa_engine_next', null, null, null)
 // Get
-Module.ccall('engine_get', null, null, null)
+Module.ccall('wa_engine_get', null, null, null)
 // Get
-Module.ccall('engine_dump', null, null, null)
+Module.ccall('wa_engine_dump', null, null, null)
 // Run 10 cycles
-Module.ccall('engine_run', null, ['number'], [10])
+Module.ccall('wa_engine_run', null, ['number'], [10])
 
 // Sequence
-Module.ccall('engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])
-Module.ccall('engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])
-Module.ccall('engine_reset', null, null, null)
-Module.ccall('engine_dump', null, null, null)
-Module.ccall('engine_run', null, ['number'], [10])
-Module.ccall('engine_dump', null, null, null)
-Module.ccall('engine_run', null, ['number'], [10])
-Module.ccall('engine_dump', null, null, null)
-Module.ccall('engine_run', null, ['number'], [10])
-Module.ccall('engine_dump', null, null, null)
+Module.ccall('wa_engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])
+Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])
+Module.ccall('wa_engine_reset', null, null, null)
+Module.ccall('wa_engine_dump', null, null, null)
+Module.ccall('wa_engine_run', null, ['number'], [10])
+Module.ccall('wa_engine_dump', null, null, null)
+Module.ccall('wa_engine_run', null, ['number'], [10])
+Module.ccall('wa_engine_dump', null, null, null)
+Module.ccall('wa_engine_run', null, ['number'], [10])
+Module.ccall('wa_engine_dump', null, null, null)
 ```
 
 Then you can run the following to see the engine work:
 ```
-Module.ccall('engine_run', null, ['number'], [10])
-Module.ccall('engine_dump', null, null, null)
+Module.ccall('wa_engine_run', null, ['number'], [10])
+Module.ccall('wa_engine_dump', null, null, null)
+```
+
+### Integrating with React/Gatsby
+- copy any_base_counter.[js|wasm] to static
+- import in Helmet (in seo.js)
+
+```
+...
+    >
+      <script src={withPrefix('any_base_counter.js')} />
+    </Helmet> 
 ```
 
 
+### Alternate WebAssembly Techniques
+
+One thing I am finding with WebAssembly, is there are multiple ways to build
+and integrate .wasm files.
+
+This [link](https://brightinventions.pl/blog/using-wasm-with-react/) describes integrating 
+wasm files with React, primarily for generating fractals.  The author uses an [online](https://mbebenita.github.io/WasmExplorer/) tool to generate .wasm files.  The downside is they
+manually access the mangled compiled name for a function.
 
 ### Links for All Resources
 
 - From [medium blog](https://medium.com/@robaboukhalil/hit-the-ground-running-with-webassembly-56cf9b2fa35d)
 - From [flaviocopes webassembly blog](https://flaviocopes.com/webassembly/)
 
-
 - [WebAssembly Standard](http://webassembly.github.io/spec/js-api/index.html)
 - [WebAssembly](https://becominghuman.ai/passing-and-returning-webassembly-array-parameters-a0f572c65d97)
 - [Explanation of cwrap and ccall](https://medium.com/@eliamaino/calling-c-functions-from-javascript-with-emscripten-first-part-e99fb6eedb22)
+
+- [Wasm with React](https://brightinventions.pl/blog/using-wasm-with-react/)
+- [Online WASM compiler](https://mbebenita.github.io/WasmExplorer/)
+- [Name Mangling](https://en.wikipedia.org/wiki/Name_mangling)
+
+- [Using AssemblyScipt](https://blog.scottlogic.com/2019/06/14/add-webassembly-to-react-app.html)
+
 
 Also, for reference, the output from the emcc compiler (that was run from within a docker
 image) is in the file emcc_help.txt

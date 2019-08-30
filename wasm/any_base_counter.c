@@ -131,7 +131,7 @@ int engine_nums[ENGINE_SIZE];
 int engine_minhex = 0;
 int engine_maxhex = 0;
 
-void engine_show(char *label, int *returnArray, int returnSize) {
+void wa_engine_show(char *label, int *returnArray, int returnSize) {
     int i;
 
     printf("%s[ ", label);
@@ -143,15 +143,15 @@ void engine_show(char *label, int *returnArray, int returnSize) {
     printf(" ]\n");
 }
 
-void EMSCRIPTEN_KEEPALIVE engine_dump(void) {
-    engine_show("engine_mins", engine_mins, ENGINE_SIZE);
-    engine_show("engine_maxs", engine_maxs, ENGINE_SIZE);
-    engine_show("engine_nums", engine_nums, ENGINE_SIZE);
+void EMSCRIPTEN_KEEPALIVE wa_engine_dump(void) {
+    wa_engine_show("engine_mins", engine_mins, ENGINE_SIZE);
+    wa_engine_show("engine_maxs", engine_maxs, ENGINE_SIZE);
+    wa_engine_show("engine_nums", engine_nums, ENGINE_SIZE);
     printf("engine_minhex: %d\n", engine_minhex);
     printf("engine_maxhex: %d\n", engine_maxhex);
 }
 
-void EMSCRIPTEN_KEEPALIVE engine_min(
+void EMSCRIPTEN_KEEPALIVE wa_engine_min(
     int digit09,
     int digit08,
     int digit07,
@@ -180,7 +180,7 @@ void EMSCRIPTEN_KEEPALIVE engine_min(
     }
 }
 
-void EMSCRIPTEN_KEEPALIVE engine_max(
+void EMSCRIPTEN_KEEPALIVE wa_engine_max(
     int digit09,
     int digit08,
     int digit07,
@@ -209,14 +209,14 @@ void EMSCRIPTEN_KEEPALIVE engine_max(
     }
 }
 
-void EMSCRIPTEN_KEEPALIVE engine_reset(void) {
+void EMSCRIPTEN_KEEPALIVE wa_engine_reset(void) {
     int i;
     for (i=0; i<ENGINE_SIZE; i++) {
         engine_nums[i] = engine_mins[i];
     }
 }
 
-void EMSCRIPTEN_KEEPALIVE engine_get(void) {
+void EMSCRIPTEN_KEEPALIVE wa_engine_get(void) {
     // print string, let js decode? convert to hex
     int i;
     for (i=0; i<ENGINE_SIZE; i++) {
@@ -228,7 +228,7 @@ void EMSCRIPTEN_KEEPALIVE engine_get(void) {
     printf("\n");
 }
 
-void EMSCRIPTEN_KEEPALIVE engine_next(void) {
+void EMSCRIPTEN_KEEPALIVE wa_engine_next(void) {
     int place = ENGINE_SIZE-1;
 
     engine_nums[place] += 1;
@@ -242,11 +242,11 @@ void EMSCRIPTEN_KEEPALIVE engine_next(void) {
     }
 }
 
-void EMSCRIPTEN_KEEPALIVE engine_run(int cycles) {
+void EMSCRIPTEN_KEEPALIVE wa_engine_run(int cycles) {
     int i;
 
     for(i=0; i<cycles; i++) {
-        engine_next();
+        wa_engine_next();
     }
 }
 #endif // ENGINE
@@ -325,8 +325,8 @@ int** counter(int* mins, int* maxs, int numsSize, int* returnSize, int** returnC
         temp[8],
         temp[9]
     );
-    engine_show("mins", mins, numsSize);
-    engine_show("engine_mins2", engine_mins, ENGINE_SIZE);
+    wa_engine_show("mins", mins, numsSize);
+    wa_engine_show("engine_mins2", engine_mins, ENGINE_SIZE);
 
     // clear temp
     for (i=0; i<ENGINE_SIZE; i++) {
@@ -351,7 +351,7 @@ int** counter(int* mins, int* maxs, int numsSize, int* returnSize, int** returnC
         temp[8],
         temp[9]
     );
-    engine_reset();
+    wa_engine_reset();
 
     // run counter
     // copy accum
@@ -360,7 +360,7 @@ int** counter(int* mins, int* maxs, int numsSize, int* returnSize, int** returnC
         buffer[0][j] = engine_nums[i];
     }
     for (col=1; col<total; col++) {
-        engine_next(); 
+        wa_engine_next(); 
         // copy accum
         n = array[col];
         for (i = ENGINE_SIZE-1, j = n-1; j>=0; i--, j--) {
@@ -408,21 +408,21 @@ int main(int argc, char ** argv) {
 
   printf("For example:\n\b");
   printf("// Set mins\n");
-  printf("Module.ccall('engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])\n");
+  printf("Module.ccall('wa_engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])\n");
   printf("// Set maxs\n");
-  printf("Module.ccall('engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])\n");
+  printf("Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])\n");
   printf("// Reset\n");
-  printf("Module.ccall('engine_reset', null, null, null)\n");
+  printf("Module.ccall('wa_engine_reset', null, null, null)\n");
   printf("// Next\n");
-  printf("Module.ccall('engine_next', null, null, null)\n");
+  printf("Module.ccall('wa_engine_next', null, null, null)\n");
   printf("// Get\n");
-  printf("Module.ccall('engine_get', null, null, null)\n");
+  printf("Module.ccall('wa_engine_get', null, null, null)\n");
   printf("// Get\n");
-  printf("Module.ccall('engine_dump', null, null, null)\n");
+  printf("Module.ccall('wa_engine_dump', null, null, null)\n");
   printf("// Run 10 cycles\n");
-  printf("Module.ccall('engine_run', null, ['number'], [10])\n");
+  printf("Module.ccall('wa_engine_run', null, ['number'], [10])\n");
 #else
-  printf("any_base_counter\n");
+  printf("any_base_counter.wasm loaded\n");
 #endif
 }
 #else
@@ -438,8 +438,8 @@ int main(void) {
         int maxs[] = { 1,1 };
         int numsSize = sizeof(maxs)/sizeof(int);
 #ifdef ENGINE
-        engine_show("given mins: ", mins, numsSize);
-        engine_show("given maxs: ", maxs, numsSize);
+        wa_engine_show("given mins: ", mins, numsSize);
+        wa_engine_show("given maxs: ", maxs, numsSize);
 #else
         show("given mins: ", mins, numsSize);
         show("given maxs: ", maxs, numsSize);
@@ -454,8 +454,8 @@ int main(void) {
         int maxs[] = { 9 };
         int numsSize = sizeof(maxs)/sizeof(int);
 #ifdef ENGINE
-        engine_show("given mins: ", mins, numsSize);
-        engine_show("given maxs: ", maxs, numsSize);
+        wa_engine_show("given mins: ", mins, numsSize);
+        wa_engine_show("given maxs: ", maxs, numsSize);
 #else
         show("given mins: ", mins, numsSize);
         show("given maxs: ", maxs, numsSize);
@@ -470,8 +470,8 @@ int main(void) {
         int maxs[] = { 15 };
         int numsSize = sizeof(maxs)/sizeof(int);
 #ifdef ENGINE
-        engine_show("given mins: ", mins, numsSize);
-        engine_show("given maxs: ", maxs, numsSize);
+        wa_engine_show("given mins: ", mins, numsSize);
+        wa_engine_show("given maxs: ", maxs, numsSize);
 #else
         show("given mins: ", mins, numsSize);
         show("given maxs: ", maxs, numsSize);
@@ -486,8 +486,8 @@ int main(void) {
         int maxs[] = { 3,2,1 };
         int numsSize = sizeof(maxs)/sizeof(int);
 #ifdef ENGINE
-        engine_show("given mins: ", mins, numsSize);
-        engine_show("given maxs: ", maxs, numsSize);
+        wa_engine_show("given mins: ", mins, numsSize);
+        wa_engine_show("given maxs: ", maxs, numsSize);
 #else
         show("given mins: ", mins, numsSize);
         show("given maxs: ", maxs, numsSize);
@@ -502,8 +502,8 @@ int main(void) {
         int maxs[] = { 2,2 };
         int numsSize = sizeof(maxs)/sizeof(int);
 #ifdef ENGINE
-        engine_show("given mins: ", mins, numsSize);
-        engine_show("given maxs: ", maxs, numsSize);
+        wa_engine_show("given mins: ", mins, numsSize);
+        wa_engine_show("given maxs: ", maxs, numsSize);
 #else
         show("given mins: ", mins, numsSize);
         show("given maxs: ", maxs, numsSize);
@@ -518,8 +518,8 @@ int main(void) {
         int maxs[] = { 2,2 };
         int numsSize = sizeof(maxs)/sizeof(int);
 #ifdef ENGINE
-        engine_show("given mins: ", mins, numsSize);
-        engine_show("given maxs: ", maxs, numsSize);
+        wa_engine_show("given mins: ", mins, numsSize);
+        wa_engine_show("given maxs: ", maxs, numsSize);
 #else
         show("given mins: ", mins, numsSize);
         show("given maxs: ", maxs, numsSize);

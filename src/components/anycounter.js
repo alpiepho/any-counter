@@ -11,11 +11,11 @@ import {
 import { FaGithub } from "react-icons/fa"
 import { makeStyles } from "@material-ui/core/styles"
 import {
-  engine_min,
-  engine_max,
-  engine_get,
-  engine_next,
-  engine_reset,
+  js_engine_min,
+  js_engine_max,
+  js_engine_get,
+  js_engine_next,
+  js_engine_reset,
 } from "./engine"
 
 const useStyles = makeStyles(theme => ({
@@ -74,10 +74,11 @@ export default function AnyCounter() {
   const classes = useStyles()
 
   useEffect(() => {
-    engine_min(minDigits)
-    engine_max(maxDigits)
-    engine_reset()
-    setAllDigits(engine_get())
+    js_engine_min(minDigits)
+    js_engine_max(maxDigits)
+    js_engine_reset()
+    setAllDigits(js_engine_get())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const stopTimer = () => {
@@ -89,8 +90,8 @@ export default function AnyCounter() {
 
   const startTimer = () => {
     timerHandle = setInterval(() => {
-      engine_next()
-      setAllDigits(engine_get())
+      js_engine_next()
+      setAllDigits(js_engine_get())
     }, runRate)
   }
 
@@ -103,24 +104,36 @@ export default function AnyCounter() {
   }
 
   const onResetClick = () => {
+    //window.Module.ccall('wa_engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])
+    //window.Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])
+
+
     stopTimer()
     setRunning(false)
-    engine_min(minDigits)
-    engine_max(maxDigits)
-    engine_reset()
-    setAllDigits(engine_get())
+    js_engine_min(minDigits)
+    js_engine_max(maxDigits)
+    js_engine_reset()
+    setAllDigits(js_engine_get())
   }
 
   const onNextClick = () => {
-    engine_next()
-    setAllDigits(engine_get())
+    //Module.ccall('main')
+    //console.log(window.Module)
+    //window.Module._main()
+    //window.Module._wa_engine_dump()
+    //window.Module.ccall("wa_engine_dump", null, null, null)
+    js_engine_next()
+    setAllDigits(js_engine_get())
   }
 
   const onRunClick = () => {
-    if (running) stopTimer()
-    else {
-      startTimer()
-    }
+    //if (webAssembly) {
+    //  if (running) window.Module.ccall("wa_engine_dump", null, null, null)
+    //  else window.Module.ccall("wa_engine_run", null, ["number"], [100])
+    //} else {
+      if (running) stopTimer()
+      else startTimer()
+    //}
     setRunning(!running)
   }
 
@@ -130,7 +143,7 @@ export default function AnyCounter() {
         let value = parseInt(event.target.value)
         setRunRate(value)
       }
-   } catch (e) {}
+    } catch (e) {}
   }
 
   const onCyclesChange = event => {
@@ -288,10 +301,10 @@ export default function AnyCounter() {
               gutterBottom
             >
               The 'run' feature lets you free run the counter. The 'run rate'
-              should let you guage the difference in
-              performance of the Javascript implentation vs the WebAssembly
-              version.  WebAssembly uses a cycle count since there is no timer 
-              in WebAssembly (that I know of).
+              should let you guage the difference in performance of the
+              Javascript implentation vs the WebAssembly version. WebAssembly
+              uses a cycle count since there is no timer in WebAssembly (that I
+              know of).
             </Typography>
             <Typography
               className={classes.paragraph}
