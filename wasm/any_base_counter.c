@@ -1,9 +1,16 @@
 #include <stdio.h>
+
+//#define WASM
+#define ENGINE  // use engine implementation rather that original
+
+#ifdef WASM
+#include <emscripten/emscripten.h>
+#else
 #include <stdlib.h>
-
 #define EMSCRIPTEN_KEEPALIVE
+#endif // WASM
 
-// gcc any_base_engine.c -o runme ; ./runme
+// gcc any_base_counter.c -o runme ; ./runme
 
 // Given integers representing the max value for each digit, run a counter with for those digits.
 
@@ -44,6 +51,19 @@
 //////////////////////////////////////////////////////
 // Support Functions
 //////////////////////////////////////////////////////
+
+#ifndef WASM
+void show(char *label, int *returnArray, int returnSize) {
+    int i;
+
+    printf("%s[ ", label);
+    for (i=0; i<returnSize; i++) {
+        printf("%d", returnArray[i]);
+        if (i < (returnSize-1))
+            printf(", ");
+    }
+    printf(" ]\n");
+}
 
 void dump(int **returnArrays, int returnSize, int* returnColumnSizes, int show_as_hex){
     int i, j, n;
@@ -90,7 +110,9 @@ void cleanup(int **returnArrays, int returnSize, int* returnColumnSizes){
         free(returnArrays);
     }
 }
+#endif // WASM
 
+#ifdef ENGINE
 //////////////////////////////////////////////////////
 // Engine Functions
 //////////////////////////////////////////////////////
@@ -226,14 +248,30 @@ void EMSCRIPTEN_KEEPALIVE engine_run(int cycles) {
         engine_next();
     }
 }
-
-
+#endif // ENGINE
 
 //////////////////////////////////////////////////////
 // Question Functions
 //////////////////////////////////////////////////////
 
-int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnColumnSizes){
+#ifndef ENGINE
+void counter_increment(int* nums, int numsSize, int* accum){
+    int place = numsSize-1;
+
+    accum[place] += 1;
+    // work backwards, add 1 to buffer[col][n] and carry if needed to n-1
+    while (accum[place] > nums[place]) {
+        accum[place] = 0; // reset place
+        if (place == 0)
+            break;         // have we maxed out
+        if (place > 0) accum[place-1] += 1; // carry to next plae
+        place -= 1;
+    }
+}
+#endif // ENGINE
+
+#ifndef WASM
+int** counter(int* mins, int* maxs, int numsSize, int* returnSize, int** returnColumnSizes){
     int i, j, n, col = 0;
     int total = 1;
     int *array;
@@ -256,6 +294,7 @@ int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnC
         buffer[j] = (int *)malloc(sizeof(int) * n);
     }
 
+#ifdef ENGINE
     // engine setup
 
     // engine_mins and engine_maxs need N parameters rather
@@ -311,7 +350,6 @@ int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnC
         temp[8],
         temp[9]
     );
-
     engine_reset();
 
     // run counter
@@ -329,27 +367,59 @@ int** counter(int *mins, int* maxs, int numsSize, int* returnSize, int** returnC
         }
     }
 
+#else
+    accum = (int *)malloc(sizeof(int) * total);
+    for (i=0; i<total; i++) {
+        accum[i] = 0;
+    }
+
+    // run counter
+    // copy accum
+    n = array[0];
+    for (i=0; i<n; i++) {
+        buffer[0][i] = accum[i];
+    }
+    for (col=1; col<total; col++) {
+        counter_increment(maxs, numsSize, accum); 
+        // copy accum
+        n = array[col];
+        for (i=0; i<n; i++) {
+            buffer[col][i] = accum[i];
+        }
+    }
+
+    free(accum);
+#endif // ENGINE
     return buffer;
 }
-
-
+#endif // WASM
 
 //////////////////////////////////////////////////////
 // Main
 //////////////////////////////////////////////////////
+#ifdef WASM
+int main(void) {
+    return 0;
+}
+#else
 int main(void) {
     int returnSize;
     int **returnArrays;
     int *returnColumnSizes;
 
-    printf("any_base_engine.c:\n");
+    printf("any_base_counter.c:\n");
     {
         int show_as_hex = 0;
         int mins[] = { 0,0 };
         int maxs[] = { 1,1 };
         int numsSize = sizeof(maxs)/sizeof(int);
+#ifdef ENGINE
         engine_show("given mins: ", mins, numsSize);
         engine_show("given maxs: ", maxs, numsSize);
+#else
+        show("given mins: ", mins, numsSize);
+        show("given maxs: ", maxs, numsSize);
+#endif
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -359,8 +429,13 @@ int main(void) {
         int mins[] = { 0 };
         int maxs[] = { 9 };
         int numsSize = sizeof(maxs)/sizeof(int);
+#ifdef ENGINE
         engine_show("given mins: ", mins, numsSize);
         engine_show("given maxs: ", maxs, numsSize);
+#else
+        show("given mins: ", mins, numsSize);
+        show("given maxs: ", maxs, numsSize);
+#endif
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -370,8 +445,13 @@ int main(void) {
         int mins[] = { 0 };
         int maxs[] = { 15 };
         int numsSize = sizeof(maxs)/sizeof(int);
+#ifdef ENGINE
         engine_show("given mins: ", mins, numsSize);
         engine_show("given maxs: ", maxs, numsSize);
+#else
+        show("given mins: ", mins, numsSize);
+        show("given maxs: ", maxs, numsSize);
+#endif
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -381,8 +461,13 @@ int main(void) {
         int mins[] = { 0,0,0 };
         int maxs[] = { 3,2,1 };
         int numsSize = sizeof(maxs)/sizeof(int);
+#ifdef ENGINE
         engine_show("given mins: ", mins, numsSize);
         engine_show("given maxs: ", maxs, numsSize);
+#else
+        show("given mins: ", mins, numsSize);
+        show("given maxs: ", maxs, numsSize);
+#endif
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -392,8 +477,13 @@ int main(void) {
         int mins[] = { 0,0 };
         int maxs[] = { 2,2 };
         int numsSize = sizeof(maxs)/sizeof(int);
+#ifdef ENGINE
         engine_show("given mins: ", mins, numsSize);
         engine_show("given maxs: ", maxs, numsSize);
+#else
+        show("given mins: ", mins, numsSize);
+        show("given maxs: ", maxs, numsSize);
+#endif
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -403,8 +493,13 @@ int main(void) {
         int mins[] = { 1,1 };
         int maxs[] = { 2,2 };
         int numsSize = sizeof(maxs)/sizeof(int);
+#ifdef ENGINE
         engine_show("given mins: ", mins, numsSize);
         engine_show("given maxs: ", maxs, numsSize);
+#else
+        show("given mins: ", mins, numsSize);
+        show("given maxs: ", maxs, numsSize);
+#endif
         returnArrays = counter(mins, maxs, numsSize, &returnSize, &returnColumnSizes);
         dump(returnArrays, returnSize, returnColumnSizes, show_as_hex);
         cleanup(returnArrays, returnSize, returnColumnSizes);
@@ -412,4 +507,5 @@ int main(void) {
 
     return 0;
 }
+#endif // WASM
 
