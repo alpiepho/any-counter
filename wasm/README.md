@@ -62,69 +62,72 @@ These were good instructions to see how to use the Docker image and how it maps 
 want to use his "git clone" method.  My wasm files will be in a subdirectory of the any-base-counter project.
 
 
+## My Steps
 
+I tried to capture the set of steps I have used.
 
-
-
-
-
-
-
-
-From the Flavio blog:
-
-Create test.c:
+#### change to wasm directory
 ```
-#include <stdio.h>
-
-int main(int argc, char ** argv) {
-  printf("Hello World\n");
-}
+cd ~/Projects/gatsby/any-counter/wasm
 ```
 
-
-Compile:
+#### creates docker container named anyWasm:
 ```
-emcc test.c -s WASM=1 -o test.html
-```
-
-Run (port set from docker launch -p 12345:80):
-```
-http://localhost:12345/MD5/test.html
+docker run -dt --name anyWasm \
+    --volume ~/Projects/gatsby/any-counter/wasm:/src \
+    -p 23456:80 \
+    robertaboukhalil/emsdk:1.38.30
 ```
 
-Open Chrome Console:
+#### start anyWasm container
 ```
-Module.callMain([ "test" ])
-```
-
-```
-#include <stdio.h>
-#include <emscripten/emscripten.h>
-
-int EMSCRIPTEN_KEEPALIVE hello(int argc, char ** argv) {
-  printf("Hello!\n");
-  return 8;
-}
-
-int main(int argc, char ** argv) {
-  printf("Hello World\n");
-}
-
-emcc test.c -s WASM=1 -o test.html -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']"
-
+docker exec -it anyWasm bash
 ```
 
-Again, in Chrome Console:
+#### from within container
 ```
-Module.ccall('hello', 'number', null, null)
-const hello = Module.cwrap('hello', 'number', null, null)
-hello()
-
+emcc any_base_counter.c -s WASM=1 -o any_base_counter.html -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']"
 ```
 
+#### this should output:
+```
+root@7ab7d94feb22:/src# emcc any_base_counter.c -s WASM=1 -o any_base_counter.html -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']"
+shared:INFO: (Emscripten: Running sanity checks)
+cache:INFO: generating system library: libdlmalloc.bc... (this will be cached in "/root/.emscripten_cache/asmjs/libdlmalloc.bc" for subsequent builds)
+cache:INFO:  - ok
+cache:INFO: generating system library: libpthreads_stub.bc... (this will be cached in "/root/.emscripten_cache/asmjs/libpthreads_stub.bc" for subsequent builds)
+cache:INFO:  - ok
+cache:INFO: generating system library: libc.bc... (this will be cached in "/root/.emscripten_cache/asmjs/libc.bc" for subsequent builds)
+cache:INFO:  - ok
+cache:INFO: generating system library: libcompiler_rt.a... (this will be cached in "/root/.emscripten_cache/asmjs/libcompiler_rt.a" for subsequent builds)
+cache:INFO:  - ok
+cache:INFO: generating system library: libc-wasm.bc... (this will be cached in "/root/.emscripten_cache/asmjs/libc-wasm.bc" for subsequent builds)
+cache:INFO:  - ok
+cache:INFO: generating system asset: generated_struct_info.json... (this will be cached in "/root/.emscripten_cache/asmjs/generated_struct_info.json" for subsequent builds)
+cache:INFO:  - ok
+```
 
-Captured some docker command line for reference:
+#### this should produce:
+```
+root@7ab7d94feb22:/src# ls -1
+README.md
+any_base_counter.c
+any_base_counter.html
+any_base_counter.js
+any_base_counter.wasm
+emcc_help.txt
+```
+
+#### from another terminal in ~/Projects/gatsby/any-counter/wasm:
+```
+open http://localhost:23456/any_base_counter.html 
+
+To open the developer console window on Chrome, use the keyboard shortcut CmdShiftJ (on Windows) or CmdOptionJ (on Mac).
+```
+
+
+#### An example of exercising the engine code from console
+
 ```
 // code snipets for emscripten console window
 // Set mins
@@ -153,9 +156,13 @@ Module.ccall('engine_run', null, ['number'], [10])
 Module.ccall('engine_dump', null, null, null)
 Module.ccall('engine_run', null, ['number'], [10])
 Module.ccall('engine_dump', null, null, null)
-
 ```
 
+Then you can run the following to see the engine work:
+```
+Module.ccall('engine_run', null, ['number'], [10])
+Module.ccall('engine_dump', null, null, null)
+```
 
 
 

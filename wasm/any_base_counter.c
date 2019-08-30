@@ -1,7 +1,8 @@
 #include <stdio.h>
 
-//#define WASM
+#define WASM
 #define ENGINE  // use engine implementation rather that original
+//#define ALLOW_HELP
 
 #ifdef WASM
 #include <emscripten/emscripten.h>
@@ -398,8 +399,31 @@ int** counter(int* mins, int* maxs, int numsSize, int* returnSize, int** returnC
 // Main
 //////////////////////////////////////////////////////
 #ifdef WASM
-int main(void) {
-    return 0;
+int main(int argc, char ** argv) {
+#ifdef ALLOW_HELP
+  printf("Hello, welcome to any_base_counter in WebAssembly\n");
+  printf("open Chrome tools console then you can run engine functions.\n");
+  printf("(To open the developer console window on Chrome, use the keyboard shortcut CmdShiftJ (on Windows) or CmdOptionJ (on Mac).\n");
+
+
+  printf("For example:\n\b");
+  printf("// Set mins\n");
+  printf("Module.ccall('engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,0,0,0,0])\n");
+  printf("// Set maxs\n");
+  printf("Module.ccall('engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], [0,0,0,0,0,0,9,9,9,9])\n");
+  printf("// Reset\n");
+  printf("Module.ccall('engine_reset', null, null, null)\n");
+  printf("// Next\n");
+  printf("Module.ccall('engine_next', null, null, null)\n");
+  printf("// Get\n");
+  printf("Module.ccall('engine_get', null, null, null)\n");
+  printf("// Get\n");
+  printf("Module.ccall('engine_dump', null, null, null)\n");
+  printf("// Run 10 cycles\n");
+  printf("Module.ccall('engine_run', null, ['number'], [10])\n");
+#else
+  printf("any_base_counter\n");
+#endif
 }
 #else
 int main(void) {
