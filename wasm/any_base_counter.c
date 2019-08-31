@@ -228,6 +228,11 @@ void EMSCRIPTEN_KEEPALIVE wa_engine_get(void) {
     printf("\n");
 }
 
+int EMSCRIPTEN_KEEPALIVE wa_engine_getN(int i) {
+    return engine_nums[i];
+}
+
+
 void EMSCRIPTEN_KEEPALIVE wa_engine_next(void) {
     int place = ENGINE_SIZE-1;
 
