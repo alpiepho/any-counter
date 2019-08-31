@@ -11,11 +11,11 @@ import {
 import { FaGithub } from "react-icons/fa"
 import { makeStyles } from "@material-ui/core/styles"
 import {
-  engine_min,
-  engine_max,
-  engine_get,
-  engine_next,
-  engine_reset,
+  js_engine_min,
+  js_engine_max,
+  js_engine_get,
+  js_engine_next,
+  js_engine_reset,
 } from "./engine"
 
 const useStyles = makeStyles(theme => ({
@@ -61,24 +61,76 @@ const useStyles = makeStyles(theme => ({
 }))
 
 var timerHandle = null
+var timerRate  = 0
 
 export default function AnyCounter() {
-  const [minDigits, setMinDigits] = useState("0 0 0 0")
-  const [maxDigits, setMaxDigits] = useState("9 9 9 9")
-  const [allDigits, setAllDigits] = useState("0 0 0 0")
+  const [minDigits, setMinDigits] = useState("0 0 0 0 0 0 0 0 0 0")
+  const [maxDigits, setMaxDigits] = useState("9 9 9 9 9 9 9 9 9 9")
+  const [allDigits, setAllDigits] = useState("0 0 0 0 0 0 0 0 0 0")
   const [running, setRunning] = useState(0)
-  const [runRate, setRunRate] = useState(1000)
-  const [cycles, setCycles] = useState(1000)
+  const [runRate, setRunRate] = useState(0)
+  const [cycles, setCycles] = useState(100)
   const [webAssembly, setWebAssembly] = useState(false)
 
   const classes = useStyles()
 
+  const isHex = (h)  => {
+    return ('abcdef'.includes(h.toLowerCase()))
+  }
+
+  const buildArray = (array) => {
+
+    let temp = array.split(' ').map((s) => {
+      if (isHex(s)) {
+          return parseInt(s,16);
+      }
+      return Number(s)
+    })
+    while (temp.length > 10) {
+      temp.shift()
+    }
+    while (temp.length < 10) {
+      temp.unshift(0)
+    }
+    return temp
+  }
+
+  const buildWebAssemblyDisplay = ()  => {
+    let result = ''
+    let i = 0
+    for (i=0; i < 10; i++) {
+      let d = window.Module.ccall('wa_engine_getN', null, ['number'], [i])
+      if (d>9 && d<16)
+        result += d.toString(16) + ' '
+      else
+        result += d.toString(10) + ' '
+    }
+    return result;
+  }
+
   useEffect(() => {
-    engine_min(minDigits)
-    engine_max(maxDigits)
-    engine_reset()
-    setAllDigits(engine_get())
+    if (webAssembly) {
+      window.Module.ccall('wa_engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], buildArray(minDigits))
+      window.Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], buildArray(maxDigits))
+      window.Module.ccall('wa_engine_reset', null, null, null)
+      //window.Module.ccall('wa_engine_get', null, null, null)
+      //window.Module.ccall('wa_engine_dump', null, null, null)
+      setAllDigits(buildWebAssemblyDisplay())
+    }
+
+    if (!webAssembly) {
+      js_engine_min(minDigits)
+      js_engine_max(maxDigits)
+      js_engine_reset()
+      setAllDigits(js_engine_get())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (webAssembly) timerRate = 0
+    else timerRate = runRate
+  }, [webAssembly, runRate])
 
   const stopTimer = () => {
     if (timerHandle) {
@@ -89,9 +141,16 @@ export default function AnyCounter() {
 
   const startTimer = () => {
     timerHandle = setInterval(() => {
-      engine_next()
-      setAllDigits(engine_get())
-    }, runRate)
+      if (webAssembly) {
+        window.Module.ccall('wa_engine_run', null, ['number'], [cycles])
+        setAllDigits(buildWebAssemblyDisplay())
+      }
+
+      if (!webAssembly) {
+        js_engine_next()
+        setAllDigits(js_engine_get())
+      }
+    }, timerRate)
   }
 
   const onMinChange = event => {
@@ -103,24 +162,45 @@ export default function AnyCounter() {
   }
 
   const onResetClick = () => {
+
     stopTimer()
     setRunning(false)
-    engine_min(minDigits)
-    engine_max(maxDigits)
-    engine_reset()
-    setAllDigits(engine_get())
+
+    if (webAssembly) {
+      window.Module.ccall('wa_engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], buildArray(minDigits))
+      window.Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], buildArray(maxDigits))
+      window.Module.ccall('wa_engine_reset', null, null, null)
+      setAllDigits(buildWebAssemblyDisplay())
+      //window.Module.ccall('wa_engine_get', null, null, null)
+      //window.Module.ccall('wa_engine_dump', null, null, null)
+    }
+
+    if (!webAssembly) {
+      js_engine_min(minDigits)
+      js_engine_max(maxDigits)
+      js_engine_reset()
+      setAllDigits(js_engine_get())
+    }
   }
 
   const onNextClick = () => {
-    engine_next()
-    setAllDigits(engine_get())
+    //console.log(window.Module)
+    if (webAssembly) {
+      window.Module.ccall('wa_engine_run', null, ['number'], [1])
+      setAllDigits(buildWebAssemblyDisplay())
+      //window.Module.ccall('wa_engine_get', null, null, null)
+      //window.Module.ccall('wa_engine_dump', null, null, null)
+    }
+
+    if (!webAssembly) {
+      js_engine_next()
+      setAllDigits(js_engine_get())
+    }
   }
 
   const onRunClick = () => {
     if (running) stopTimer()
-    else {
-      startTimer()
-    }
+    else startTimer()
     setRunning(!running)
   }
 
@@ -130,7 +210,7 @@ export default function AnyCounter() {
         let value = parseInt(event.target.value)
         setRunRate(value)
       }
-   } catch (e) {}
+    } catch (e) {}
   }
 
   const onCyclesChange = event => {
@@ -288,10 +368,21 @@ export default function AnyCounter() {
               gutterBottom
             >
               The 'run' feature lets you free run the counter. The 'run rate'
-              should let you guage the difference in
-              performance of the Javascript implentation vs the WebAssembly
-              version.  WebAssembly uses a cycle count since there is no timer 
-              in WebAssembly (that I know of).
+              controls how fast the Javascript version runs (0 is max speed). 
+            </Typography>
+            <Typography
+              className={classes.paragraph}
+              variant="body1"
+              gutterBottom
+            >
+              The WebAssembly version operates differently. you can specify the
+              number of cycles to run per iterations (blocking the main thread).
+              The call for N iterations is run in a 0 length timer, so it is also
+              running at max speed.
+              <br/>
+              Note, this WebAssembly version is based on Enscriptem and has a lot
+              of JavaScript glue.  With some tuning, it should run even faster 
+              that it currently does.
             </Typography>
             <Typography
               className={classes.paragraph}

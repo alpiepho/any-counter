@@ -42,9 +42,28 @@ I have been exeprimenting with LightHouse testing for a few weeks.  I noticed th
 ![lighthouse fireworks](./lighthouse_fireworks.png)
 
 
+## A Collection of Buzzwords
+
+This small concept project has turned into an example of several technologies,
+or "Buzzwords":
+
+- HTML
+- CSS
+- Javascript
+- React
+- Gatsby
+- Material UI
+- PWA (progresive web apps)
+- JAMStack
+- WebAssembly
+- GH-Pages
+- Netlify
+- Lighthouse
+
+
 ##  Whats left TODO
 
-This is a list of some things to finish up:
+This is a list of some other ideas:
 
 - Create Bootstrap version
 - Use this for other apps:

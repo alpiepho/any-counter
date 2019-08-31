@@ -31,7 +31,7 @@ function asHex(d) {
     return d.toString(10)
 }
 
-export function engine_min(newValue) {
+export function js_engine_min(newValue) {
     minHex = false
     minDigits = newValue.split(' ').map((s) => {
         if (isHex(s)) {
@@ -42,7 +42,7 @@ export function engine_min(newValue) {
     })
 }
 
-export function engine_max(newValue) {
+export function js_engine_max(newValue) {
     maxHex = false
     maxDigits = newValue.split(' ').map((s) => {
         if (isHex(s)) {
@@ -53,17 +53,17 @@ export function engine_max(newValue) {
     })
 }
 
-export function engine_get() {
+export function js_engine_get() {
     let result = allDigits.reduce((prev, digit) => {
         return prev + ' ' + asHex(digit)
     }, '')
     return result
 }
 
-export function engine_next() {
+export function js_engine_next() {
     counter_increment()
 }
 
-export function engine_reset() {
+export function js_engine_reset() {
     allDigits = [...minDigits]
 }
