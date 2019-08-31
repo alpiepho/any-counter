@@ -1982,6 +1982,12 @@ var real__wa_engine_get = asm["_wa_engine_get"]; asm["_wa_engine_get"] = functio
   return real__wa_engine_get.apply(null, arguments);
 };
 
+var real__wa_engine_getN = asm["_wa_engine_getN"]; asm["_wa_engine_getN"] = function() {
+  assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+  assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+  return real__wa_engine_getN.apply(null, arguments);
+};
+
 var real__wa_engine_max = asm["_wa_engine_max"]; asm["_wa_engine_max"] = function() {
   assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
   assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
@@ -2076,6 +2082,10 @@ var _wa_engine_get = Module["_wa_engine_get"] = function() {
   assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
   assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
   return Module["asm"]["_wa_engine_get"].apply(null, arguments) };
+var _wa_engine_getN = Module["_wa_engine_getN"] = function() {
+  assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+  assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+  return Module["asm"]["_wa_engine_getN"].apply(null, arguments) };
 var _wa_engine_max = Module["_wa_engine_max"] = function() {
   assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
   assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
