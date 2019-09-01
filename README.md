@@ -82,3 +82,8 @@ This is a list of some other ideas:
 - wasm with C processes
 - wasm with Rust
 - Go the other way and use AWS or Azure services for counter
+
+
+## Updates for GitHub security issues
+
+- added eslint-utils directly to package.json (is a deep dependency)
