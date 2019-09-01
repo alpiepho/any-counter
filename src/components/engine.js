@@ -60,8 +60,11 @@ export function js_engine_get() {
     return result
 }
 
-export function js_engine_next() {
-    counter_increment()
+export function js_engine_next(cycles) {
+    let i
+    for (i=0; i<cycles; i++) {
+        counter_increment()
+    }
 }
 
 export function js_engine_reset() {

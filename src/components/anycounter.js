@@ -61,7 +61,6 @@ const useStyles = makeStyles(theme => ({
 }))
 
 var timerHandle = null
-var timerRate  = 0
 
 export default function AnyCounter() {
   const [minDigits, setMinDigits] = useState("0 0 0 0 0 0 0 0 0 0")
@@ -113,8 +112,6 @@ export default function AnyCounter() {
       window.Module.ccall('wa_engine_min', null, ['number','number','number','number','number','number','number','number','number','number'], buildArray(minDigits))
       window.Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], buildArray(maxDigits))
       window.Module.ccall('wa_engine_reset', null, null, null)
-      //window.Module.ccall('wa_engine_get', null, null, null)
-      //window.Module.ccall('wa_engine_dump', null, null, null)
       setAllDigits(buildWebAssemblyDisplay())
     }
 
@@ -126,11 +123,6 @@ export default function AnyCounter() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (webAssembly) timerRate = 0
-    else timerRate = runRate
-  }, [webAssembly, runRate])
 
   const stopTimer = () => {
     if (timerHandle) {
@@ -147,10 +139,10 @@ export default function AnyCounter() {
       }
 
       if (!webAssembly) {
-        js_engine_next()
+        js_engine_next(cycles)
         setAllDigits(js_engine_get())
       }
-    }, timerRate)
+    }, runRate)
   }
 
   const onMinChange = event => {
@@ -171,8 +163,6 @@ export default function AnyCounter() {
       window.Module.ccall('wa_engine_max', null, ['number','number','number','number','number','number','number','number','number','number'], buildArray(maxDigits))
       window.Module.ccall('wa_engine_reset', null, null, null)
       setAllDigits(buildWebAssemblyDisplay())
-      //window.Module.ccall('wa_engine_get', null, null, null)
-      //window.Module.ccall('wa_engine_dump', null, null, null)
     }
 
     if (!webAssembly) {
@@ -184,16 +174,13 @@ export default function AnyCounter() {
   }
 
   const onNextClick = () => {
-    //console.log(window.Module)
     if (webAssembly) {
       window.Module.ccall('wa_engine_run', null, ['number'], [1])
       setAllDigits(buildWebAssemblyDisplay())
-      //window.Module.ccall('wa_engine_get', null, null, null)
-      //window.Module.ccall('wa_engine_dump', null, null, null)
     }
 
     if (!webAssembly) {
-      js_engine_next()
+      js_engine_next(1)
       setAllDigits(js_engine_get())
     }
   }
@@ -282,7 +269,6 @@ export default function AnyCounter() {
                 onChange={onMinChange}
               />
             </Grid>
-            {!webAssembly ? (
               <Grid item>
                 <TextField
                   id="standard-helperText"
@@ -294,21 +280,18 @@ export default function AnyCounter() {
                   onChange={onRunRateChange}
                 />
               </Grid>
-            ) : null}
-            {webAssembly ? (
               <Grid item>
                 <TextField
                   id="standard-helperText"
                   label="cycle count"
                   defaultValue={cycles}
                   className={classes.textField}
-                  helperText="WebAssembly Cycles per access"
+                  helperText="Cycles per access"
                   margin="normal"
                   onChange={onCyclesChange}
                 />
               </Grid>
-            ) : null}
-            <Grid item>
+              <Grid item>
               <FormControlLabel
                 className={classes.checkboxField}
                 control={
@@ -344,53 +327,14 @@ export default function AnyCounter() {
             >
               Why? What is the purpose of this application?
             </Typography>
+
             <Typography
               className={classes.paragraph}
               variant="body1"
               gutterBottom
             >
-              There are several problems that can be solved with a counter that
-              uses different ranges for the digits. For example, if you enter
-              all 1s for max, then you have a binary counter. If you enter 'FF',
-              then you have a hex counter.
-            </Typography>
-            <Typography
-              className={classes.paragraph}
-              variant="body1"
-              gutterBottom
-            >
-              A more complex example is min set to '5 0 0' and max set to '9 59
-              59' then you have a time counter from 5 mins to 10 mins.
-            </Typography>
-            <Typography
-              className={classes.paragraph}
-              variant="body1"
-              gutterBottom
-            >
-              The 'run' feature lets you free run the counter. The 'run rate'
-              controls how fast the Javascript version runs (0 is max speed). 
-            </Typography>
-            <Typography
-              className={classes.paragraph}
-              variant="body1"
-              gutterBottom
-            >
-              The WebAssembly version operates differently. you can specify the
-              number of cycles to run per iterations (blocking the main thread).
-              The call for N iterations is run in a 0 length timer, so it is also
-              running at max speed.
-              <br/>
-              Note, this WebAssembly version is based on Enscriptem and has a lot
-              of JavaScript glue.  With some tuning, it should run even faster 
-              that it currently does.
-            </Typography>
-            <Typography
-              className={classes.paragraph}
-              variant="body1"
-              gutterBottom
-            >
-              This example can be the source of other various types of counters.
-              The source can be found on GitHub{" "}
+              To find out, and learn more about how this uses WebAssembly, please see
+              the details on GitHub{" "}
               <a
                 href={`https://github.com/alpiepho/any-counter`}
                 target="_blank"

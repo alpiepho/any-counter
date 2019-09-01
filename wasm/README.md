@@ -2,8 +2,6 @@
 
 ## Build WebAssembly
 
-:warning: TODO need to clean this up
-
 This started as rough notes for experimenting with WebAssembly.  my goal is to allow
 the user of the any-base-counter to run the counter in Javascript or optionally in
 WebAssembly.
@@ -174,6 +172,25 @@ Module.ccall('wa_engine_dump', null, null, null)
       <script src={withPrefix('any_base_counter.js')} />
     </Helmet> 
 ```
+
+- and use the Module.ccall calling from the window object:
+```
+  const onNextClick = () => {
+    if (webAssembly) {
+      window.Module.ccall('wa_engine_run', null, ['number'], [1])
+      setAllDigits(buildWebAssemblyDisplay())
+    }
+    ...
+```
+
+NOTE: We found the function signatures between the C/C++ code and Javascript
+was the difficult.  For this implimentation, we limited the calls to pass
+simple integers, rather than send an array of ints.  Similarly, we used multiple
+function calls to get the digits of the engine, instead of passing back and
+array.  I'm sure there is significant Javascript overhead to running WebAssembly.
+
+In fact, we didn't see significant improvements in performance using WebAssembly.
+We will need to investigate.
 
 
 ### Alternate WebAssembly Techniques
