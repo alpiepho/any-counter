@@ -26,27 +26,40 @@ workbox.clientsClaim();
  */
 self.__precacheManifest = [
   {
-    "url": "webpack-runtime-39a5c0e5939c08fd0114.js"
+    "url": "webpack-runtime-973864d858d01a97bc60.js"
   },
   {
-    "url": "commons.d5ef0abb16ee382cea7f.css"
+    "url": "app-5f2f2d9398ac0f81f4cc.js"
   },
   {
-    "url": "commons-c1a71d770149fa19380f.js"
-  },
-  {
-    "url": "app-432f5f64d04199ad3e91.js"
-  },
-  {
-    "url": "component---node-modules-gatsby-plugin-offline-app-shell-js-b0e0722e60619aef060d.js"
+    "url": "component---node-modules-gatsby-plugin-offline-app-shell-js-6e0d342509864a0cb527.js"
   },
   {
     "url": "offline-plugin-app-shell-fallback/index.html",
-    "revision": "ed998d2d52bbce757ee828b78345cd48"
+    "revision": "e7657a7cc95ae6f3da22bc3c4415ba6e"
+  },
+  {
+    "url": "styles.d5ef0abb16ee382cea7f.css"
+  },
+  {
+    "url": "any_base_counter.js"
+  },
+  {
+    "url": "1-e18808c3418d4335fac7.js"
+  },
+  {
+    "url": "component---src-pages-404-js-a408577c249ca834d265.js"
+  },
+  {
+    "url": "styles-9a486f60773378811abf.js"
+  },
+  {
+    "url": "page-data/404.html/page-data.json",
+    "revision": "ce4c20eaaf60aacefbf2a20db5025a20"
   },
   {
     "url": "page-data/offline-plugin-app-shell-fallback/page-data.json",
-    "revision": "e60b9d42a6b3bdf570efd3b59b653a51"
+    "revision": "41370df0ee38d33a8329fd9e0931a3dc"
   },
   {
     "url": "manifest.webmanifest",
@@ -64,46 +77,101 @@ workbox.routing.registerRoute(/^https?:\/\/fonts\.googleapis\.com\/css/, workbox
 /* global importScripts, workbox, idbKeyval */
 
 importScripts(`idb-keyval-iife.min.js`)
+const WHITELIST_KEY = `custom-navigation-whitelist`
 
-const { NavigationRoute } = workbox.routing
+const navigationRoute = new workbox.routing.NavigationRoute(({ event }) => {
+  const { pathname } = new URL(event.request.url)
 
-const navigationRoute = new NavigationRoute(async ({ event }) => {
-  let { pathname } = new URL(event.request.url)
-  pathname = pathname.replace(new RegExp(`^/any-counter`), ``)
+  return idbKeyval.get(WHITELIST_KEY).then((customWhitelist = []) => {
+    // Respond with the offline shell if we match the custom whitelist
+    if (customWhitelist.includes(pathname)) {
+      const offlineShell = `/any-counter/offline-plugin-app-shell-fallback/index.html`
+      const cacheName = workbox.core.cacheNames.precache
 
-  // Check for resources + the app bundle
-  // The latter may not exist if the SW is updating to a new version
-  const resources = await idbKeyval.get(`resources:${pathname}`)
-  if (!resources || !(await caches.match(`/any-counter/app-432f5f64d04199ad3e91.js`))) {
-    return await fetch(event.request)
-  }
+      return caches.match(offlineShell, { cacheName }).then(cachedResponse => {
+        if (cachedResponse) return cachedResponse
 
-  for (const resource of resources) {
-    // As soon as we detect a failed resource, fetch the entire page from
-    // network - that way we won't risk being in an inconsistent state with
-    // some parts of the page failing.
-    if (!(await caches.match(resource))) {
-      return await fetch(event.request)
+        console.error(
+          `The offline shell (${offlineShell}) was not found ` +
+            `while attempting to serve a response for ${pathname}`
+        )
+
+        return fetch(offlineShell).then(response => {
+          if (response.ok) {
+            return caches.open(cacheName).then(cache =>
+              // Clone is needed because put() consumes the response body.
+              cache.put(offlineShell, response.clone()).then(() => response)
+            )
+          } else {
+            return fetch(event.request)
+          }
+        })
+      })
     }
-  }
 
-  const offlineShell = `/any-counter/offline-plugin-app-shell-fallback/index.html`
-  return await caches.match(offlineShell)
+    return fetch(event.request)
+  })
 })
 
 workbox.routing.registerRoute(navigationRoute)
 
+let updatingWhitelist = null
+
+function rawWhitelistPathnames(pathnames) {
+  if (updatingWhitelist !== null) {
+    // Prevent the whitelist from being updated twice at the same time
+    return updatingWhitelist.then(() => rawWhitelistPathnames(pathnames))
+  }
+
+  updatingWhitelist = idbKeyval
+    .get(WHITELIST_KEY)
+    .then((customWhitelist = []) => {
+      pathnames.forEach(pathname => {
+        if (!customWhitelist.includes(pathname)) customWhitelist.push(pathname)
+      })
+
+      return idbKeyval.set(WHITELIST_KEY, customWhitelist)
+    })
+    .then(() => {
+      updatingWhitelist = null
+    })
+
+  return updatingWhitelist
+}
+
+function rawResetWhitelist() {
+  if (updatingWhitelist !== null) {
+    return updatingWhitelist.then(() => rawResetWhitelist())
+  }
+
+  updatingWhitelist = idbKeyval.set(WHITELIST_KEY, []).then(() => {
+    updatingWhitelist = null
+  })
+
+  return updatingWhitelist
+}
+
 const messageApi = {
-  setPathResources(event, { path, resources }) {
-    event.waitUntil(idbKeyval.set(`resources:${path}`, resources))
+  whitelistPathnames(event) {
+    let { pathnames } = event.data
+
+    pathnames = pathnames.map(({ pathname, includesPrefix }) => {
+      if (!includesPrefix) {
+        return `/any-counter${pathname}`
+      } else {
+        return pathname
+      }
+    })
+
+    event.waitUntil(rawWhitelistPathnames(pathnames))
   },
 
-  clearPathResources(event) {
-    event.waitUntil(idbKeyval.clear())
+  resetWhitelist(event) {
+    event.waitUntil(rawResetWhitelist())
   },
 }
 
 self.addEventListener(`message`, event => {
   const { gatsbyApi } = event.data
-  if (gatsbyApi) messageApi[gatsbyApi](event, event.data)
+  if (gatsbyApi) messageApi[gatsbyApi](event)
 })
