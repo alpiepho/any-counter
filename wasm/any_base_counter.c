@@ -214,6 +214,7 @@ void EMSCRIPTEN_KEEPALIVE wa_engine_reset(void) {
     for (i=0; i<ENGINE_SIZE; i++) {
         engine_nums[i] = engine_mins[i];
     }
+    printf("any_base_counter.wasm - wa_engine_reset\n");
 }
 
 void EMSCRIPTEN_KEEPALIVE wa_engine_get(void) {
@@ -427,7 +428,7 @@ int main(int argc, char ** argv) {
   printf("// Run 10 cycles\n");
   printf("Module.ccall('wa_engine_run', null, ['number'], [10])\n");
 #else
-  printf("any_base_counter.wasm loaded\n");
+  printf("any_base_counter.wasm - loaded\n");
 #endif
 }
 #else
